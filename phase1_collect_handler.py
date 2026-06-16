@@ -1,14 +1,14 @@
 """
-Phase 1 – Central Backup Vault Index Collector
+Phase 1 - Central Backup Vault Index Collector
 
 Runs inside an SSM Automation aws:executeScript step (Python 3.11).
 Entry point: script_handler(events, context)
 
 events keys (passed from SSM InputPayload):
-    Region                  – target region  (injected via {{global:REGION}})
-    S3Bucket                – bucket name in ap-southeast-1
-    S3Prefix                – key prefix (default: "central-index")
-    RetentionThresholdDays  – integer, default 35
+    Region                  - target region  (injected via {{global:REGION}})
+    S3Bucket                - bucket name in ap-southeast-1
+    S3Prefix                - key prefix (default: "central-index")
+    RetentionThresholdDays  - integer, default 35
 
 For each active vault in the region the script:
   1. Auto-discovers all backup vaults (list_backup_vaults)
@@ -18,7 +18,7 @@ For each active vault in the region the script:
   5. Writes one S3 JSON file per ResourceType:
        s3://<bucket>/<prefix>/<region>/<ResourceType>.json
 
-S3 versioning is expected to be enabled on the bucket – each daily run
+S3 versioning is expected to be enabled on the bucket - each daily run
 overwrites the same key and S3 retains previous versions automatically.
 """
 
@@ -37,8 +37,8 @@ def _derive_retention_days(rp: dict) -> Optional[int]:
     Return retention in days from a raw recovery-point dict.
     Priority:
       1. Lifecycle.DeleteAfterDays  (explicitly configured at backup plan level)
-      2. CalculatedLifecycle.DeleteAt − CreationDate  (AWS-computed)
-      3. None  (unknown – caller treats as "include")
+      2. CalculatedLifecycle.DeleteAt - CreationDate  (AWS-computed)
+      3. None  (unknown - caller treats as "include")
     """
     lc = rp.get("Lifecycle") or {}
     explicit = lc.get("DeleteAfterDays")
@@ -81,15 +81,15 @@ def script_handler(events: dict, context) -> dict:
     SSM Automation entry point.
     Returns a summary dict that SSM captures as step output.
     """
-    region                = events["Region"]
-    s3_bucket             = events["S3Bucket"]
-    s3_prefix             = events.get("S3Prefix", "central-index")
-    retention_threshold   = int(events.get("RetentionThresholdDays", 35))
+    region              = events["Region"]
+    s3_bucket           = events["S3Bucket"]
+    s3_prefix           = events.get("S3Prefix", "central-index")
+    retention_threshold = int(events.get("RetentionThresholdDays", 35))
 
     backup = boto3.client("backup", region_name=region)
     s3     = boto3.client("s3",     region_name="ap-southeast-1")
 
-    # ── 1. Discover all vaults in this region ──────────────────────────────
+    # -- 1. Discover all vaults in this region --------------------------------
     vaults = []
     try:
         paginator = backup.get_paginator("list_backup_vaults")
@@ -100,7 +100,7 @@ def script_handler(events: dict, context) -> dict:
 
     print(f"[{region}] Discovered {len(vaults)} vault(s)")
 
-    # ── 2. Scan each vault ─────────────────────────────────────────────────
+    # -- 2. Scan each vault ---------------------------------------------------
     # Structure: { resource_type: { source_account_id: [ record, ... ] } }
     collected: dict = {}
     total_kept        = 0
@@ -165,9 +165,9 @@ def script_handler(events: dict, context) -> dict:
         f"skipped_no_source={skipped_no_source}"
     )
 
-    # ── 3. Write one S3 file per ResourceType ──────────────────────────────
-    files_written      = []
-    collected_at_str   = datetime.now(timezone.utc).isoformat()
+    # -- 3. Write one S3 file per ResourceType --------------------------------
+    files_written    = []
+    collected_at_str = datetime.now(timezone.utc).isoformat()
 
     for resource_type, by_account in collected.items():
         s3_key  = f"{s3_prefix}/{region}/{resource_type}.json"
