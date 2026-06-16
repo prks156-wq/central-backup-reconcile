@@ -1,4 +1,3 @@
-# claude --resume 26a43907-3deb-4dc8-8a0e-07ffe5360427
 # AWS Backup Recovery Point Reconciliation – Project Summary
 
 ## Problem Statement
