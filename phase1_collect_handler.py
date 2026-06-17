@@ -144,6 +144,7 @@ def script_handler(events: dict, context) -> dict:
                         "backup_size_bytes": rp.get("BackupSizeInBytes"),
                     }
 
+                    # Parentheses allow multi-line method chaining (implicit line joining) without backslashes
                     (
                         collected
                         .setdefault(resource_type, {})
